@@ -1,10 +1,11 @@
 // config/db.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+//const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
     const dbURI = process.env.MONGO_URI;
-    
+    //console.log(dbURI);
     // Connect to the database
     const conn = await mongoose.connect(dbURI);
     
@@ -16,4 +17,4 @@ const connectDB = async () => {
 };
 
 // Export the function so server.js can use it
-module.exports = connectDB;
+export default connectDB;

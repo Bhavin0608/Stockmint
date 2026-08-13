@@ -1,7 +1,10 @@
 // Demo server for test.
-const express = require('express');
-const connectDB = require('./config/db');
-require('dotenv').config();
+import express from 'express';
+import connectDB from './config/db.js';
+import dotenv from 'dotenv';
+//const express = require('express');
+//const connectDB = require('./config/db');
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
