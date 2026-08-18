@@ -1,4 +1,4 @@
-import mongooswe from 'mongoose';
+import mongoose from 'mongoose';
 const userSchema = new mongoose.Schema({
     name : {
         type : String,
@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
         enum : ['active', 'blocked'],
         default : 'active'
     }
-},{timestamp : true});
+},{timestamps : true});
 
 const User = mongoose.model('User', userSchema);
 export default User;
