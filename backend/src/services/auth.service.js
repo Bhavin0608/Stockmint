@@ -1,5 +1,6 @@
 import User from "../models/User.js";
-import { hashPassword } from "../utils/password.js";
+import { hashPassword, comparePassword } from "../utils/password.js";
+import { generateAccessToken } from "../utils/jwt.js";
 
 export const registerUser = async ({ name, email, password }) => {
   // Normalize the email before checking/storing it.
@@ -34,5 +35,50 @@ export const registerUser = async ({ name, email, password }) => {
     role: user.role,
     status: user.status,
     createdAt: user.createdAt,
+  };
+};
+
+export const loginUser = async ({ email, password }) => {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const user = await User.findOne({
+    email: normalizedEmail,
+  }).select("+passwordHash");
+
+  if (!user) {
+    const error = new Error("Invalid email or password");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (user.status !== "active") {
+    const error = new Error("Account is blocked");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const isPasswordValid = await comparePassword(
+    password,
+    user.passwordHash
+  );
+
+  if (!isPasswordValid) {
+    const error = new Error("Invalid email or password");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const token = generateAccessToken(user); // genrate jwt token for user to access the protected routes and resources
+
+  // Return the token and user details (excluding sensitive information) to the client.
+  return {
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    },
   };
 };
