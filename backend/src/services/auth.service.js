@@ -1,6 +1,8 @@
 import User from "../models/User.js";
+import RefreshSession from "../models/RefreshSession.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { generateAccessToken } from "../utils/jwt.js";
+import { generateRefreshToken, hashRefreshToken } from "../utils/refreshToken.js";
 
 export const registerUser = async ({ name, email, password }) => {
   // Normalize the email before checking/storing it.
@@ -67,12 +69,27 @@ export const loginUser = async ({ email, password }) => {
     error.statusCode = 401;
     throw error;
   }
+  // Generate access token and refresh token for the user.
+  const { token: accessToken } = generateAccessToken(user);
+  console.log("Access token exists:", !!accessToken);
 
-  const token = generateAccessToken(user); // genrate jwt token for user to access the protected routes and resources
+  const refreshToken = generateRefreshToken();
+  const tokenHash = hashRefreshToken(refreshToken);
 
-  // Return the token and user details (excluding sensitive information) to the client.
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  // Set in the database.
+  await RefreshSession.create({
+    userId: user._id,
+    tokenHash,
+    expiresAt,
+  });
+  
+  // Return the tokens and user information to the client.
   return {
-    token,
+    accessToken,
+    refreshToken,
     user: {
       id: user._id,
       name: user.name,
@@ -81,4 +98,113 @@ export const loginUser = async ({ email, password }) => {
       status: user.status,
     },
   };
+};
+
+export const refreshAccessToken = async (refreshToken) => {
+  if (!refreshToken) {
+    const error = new Error("Refresh token required");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const tokenHash = hashRefreshToken(refreshToken);
+
+  const session = await RefreshSession.findOneAndUpdate(
+    {
+      tokenHash,
+      revokedAt: null,
+    },
+    {
+      $set: {
+        revokedAt: new Date(),
+      },
+    },
+    {
+      //new: true,
+      returnDocument: "after", // Use "after" to get the updated document after the update operation.
+    }
+  );
+
+  // if (!session) {
+  //   const error = new Error("Invalid refresh token");
+  //   error.statusCode = 401;
+  //   throw error;
+  // }
+
+  // if (session.revokedAt) {
+  //   const error = new Error("Refresh token has been revoked");
+  //   error.statusCode = 401;
+  //   throw error;
+  // }
+
+  if (session.expiresAt <= new Date()) {
+    const error = new Error("Refresh token has expired");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const user = await User.findById(session.userId);
+
+  if (!user) {
+    const error = new Error("User no longer exists");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (user.status !== "active") {
+    const error = new Error("Account is blocked");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  // Revoke the old refresh session.
+  // session.revokedAt = new Date();
+  // await session.save();
+
+  // Generate a completely new refresh token.
+  const newRefreshToken = generateRefreshToken();
+  const newTokenHash = hashRefreshToken(newRefreshToken);
+
+  const newExpiresAt = new Date();
+  newExpiresAt.setDate(newExpiresAt.getDate() + 7);
+
+  await RefreshSession.create({
+    userId: user._id,
+    tokenHash: newTokenHash,
+    expiresAt: newExpiresAt,
+  });
+
+  // Generate a new access token.
+  const { token: accessToken } = generateAccessToken(user);
+
+  return {
+    accessToken,
+    refreshToken: newRefreshToken,
+  };
+};
+
+export const logoutUser = async (refreshToken) => {
+  if (!refreshToken) {
+    const error = new Error("Refresh token required");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const tokenHash = hashRefreshToken(refreshToken);
+
+  const session = await RefreshSession.findOne({
+    tokenHash,
+    revokedAt: null,
+  });
+
+  if (!session) {
+    const error = new Error("Invalid refresh token");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  session.revokedAt = new Date();
+  await session.save();
+
+  return true;
 };

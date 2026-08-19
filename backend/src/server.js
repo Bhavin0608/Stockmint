@@ -4,6 +4,7 @@ import connectDB from './config/db.js';
 import dotenv from 'dotenv';
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
+import cookieParser from "cookie-parser";
 //const express = require('express');
 //const connectDB = require('./config/db');
 dotenv.config();
@@ -16,6 +17,8 @@ console.log("JWT_SECRET:", !!process.env.JWT_SECRET);
 
 // Middleware to parse incoming JSON payloads
 app.use(express.json());
+// Middleware to parse cookies from incoming requests
+app.use(cookieParser()); // it is use to convert browser cookies into a readable format for the server. it is used to read the refresh token from the cookie in the login route.
 
 //All auth routes will be prefixed with /api/auth
 //This is called mounting the router. All routes defined in authRouter will be accessible under /api/auth.
