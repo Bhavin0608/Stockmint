@@ -20,7 +20,6 @@ export const register = async (req, res, next) => {
   }
 };
 
-// Login controller
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;

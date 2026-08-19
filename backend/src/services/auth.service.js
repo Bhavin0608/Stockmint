@@ -109,33 +109,16 @@ export const refreshAccessToken = async (refreshToken) => {
 
   const tokenHash = hashRefreshToken(refreshToken);
 
-  const session = await RefreshSession.findOneAndUpdate(
-    {
-      tokenHash,
-      revokedAt: null,
-    },
-    {
-      $set: {
-        revokedAt: new Date(),
-      },
-    },
-    {
-      //new: true,
-      returnDocument: "after", // Use "after" to get the updated document after the update operation.
-    }
-  );
+  const session = await RefreshSession.findOneAndDelete({
+    tokenHash,
+    expiresAt: { $gt: new Date() }, // Ensure the refresh token is not expired
+  });
 
-  // if (!session) {
-  //   const error = new Error("Invalid refresh token");
-  //   error.statusCode = 401;
-  //   throw error;
-  // }
-
-  // if (session.revokedAt) {
-  //   const error = new Error("Refresh token has been revoked");
-  //   error.statusCode = 401;
-  //   throw error;
-  // }
+  if (!session) {
+    const error = new Error("Invalid or expired refresh token");
+    error.statusCode = 401;
+    throw error;
+  }
 
   if (session.expiresAt <= new Date()) {
     const error = new Error("Refresh token has expired");
@@ -156,10 +139,6 @@ export const refreshAccessToken = async (refreshToken) => {
     error.statusCode = 403;
     throw error;
   }
-
-  // Revoke the old refresh session.
-  // session.revokedAt = new Date();
-  // await session.save();
 
   // Generate a completely new refresh token.
   const newRefreshToken = generateRefreshToken();
@@ -191,20 +170,7 @@ export const logoutUser = async (refreshToken) => {
   }
 
   const tokenHash = hashRefreshToken(refreshToken);
-
-  const session = await RefreshSession.findOne({
-    tokenHash,
-    revokedAt: null,
-  });
-
-  if (!session) {
-    const error = new Error("Invalid refresh token");
-    error.statusCode = 401;
-    throw error;
-  }
-
-  session.revokedAt = new Date();
-  await session.save();
+  await RefreshSession.deleteOne({ tokenHash });
 
   return true;
 };
