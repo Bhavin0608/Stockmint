@@ -3,6 +3,7 @@ import express from 'express';
 import connectDB from './config/db.js';
 import dotenv from 'dotenv';
 import authRouter from "./routes/auth.routes.js";
+import userRouter from "./routes/user.routes.js";
 //const express = require('express');
 //const connectDB = require('./config/db');
 dotenv.config();
@@ -19,6 +20,7 @@ app.use(express.json());
 //All auth routes will be prefixed with /api/auth
 //This is called mounting the router. All routes defined in authRouter will be accessible under /api/auth.
 app.use('/api/auth', authRouter);
+app.use('/api/user', userRouter);
 // Call the db method
 connectDB();
 
