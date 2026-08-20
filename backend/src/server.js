@@ -3,6 +3,7 @@ import connectDB from './config/db.js';
 import dotenv from 'dotenv';
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
+import addressRouter from "./routes/address.routes.js";
 import cookieParser from "cookie-parser";
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(cookieParser()); // it is use to convert browser cookies into a readable
 //This is called mounting the router. All routes defined in authRouter will be accessible under /api/auth.
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
+app.use('/api/addresses', addressRouter);
 
 // Call the db method
 connectDB();
