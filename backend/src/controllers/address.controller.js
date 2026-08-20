@@ -1,4 +1,4 @@
-import { createAddress, getUserAddresses, getAddressById } from "../services/address.service.js";
+import { createAddress, getUserAddresses, getAddressById, updateAddress, deleteAddress } from "../services/address.service.js";
 
 export const create = async (req, res, next) => {
   try {
@@ -40,6 +40,40 @@ export const getOne = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       data: address,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const update = async (req, res, next) => {
+  try {
+    const address = await updateAddress(
+      req.user._id,
+      req.params.id,
+      req.body
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Address updated successfully",
+      data: address,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const remove = async (req, res, next) => {
+  try {
+    await deleteAddress(
+      req.user._id,
+      req.params.id
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Address deleted successfully",
     });
   } catch (error) {
     next(error);
