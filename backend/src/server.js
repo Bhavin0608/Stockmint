@@ -5,6 +5,7 @@ import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import addressRouter from "./routes/address.routes.js";
 import cookieParser from "cookie-parser";
+import categoryRouter from "./routes/category.routes.js";
 dotenv.config();
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(cookieParser()); // it is use to convert browser cookies into a readable
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/addresses', addressRouter);
+app.use('/api/categories', categoryRouter);
 
 // Call the db method
 connectDB();
