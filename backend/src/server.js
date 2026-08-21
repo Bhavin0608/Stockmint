@@ -6,6 +6,7 @@ import userRouter from "./routes/user.routes.js";
 import addressRouter from "./routes/address.routes.js";
 import cookieParser from "cookie-parser";
 import categoryRouter from "./routes/category.routes.js";
+import { errorHandler } from "./middlewares/error.middleware.js";
 dotenv.config();
 
 const app = express();
@@ -21,6 +22,9 @@ app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/addresses', addressRouter);
 app.use('/api/categories', categoryRouter);
+
+// Error handling middleware
+app.use(errorHandler);
 
 // Call the db method
 connectDB();
