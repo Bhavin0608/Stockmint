@@ -1,11 +1,14 @@
 import express from 'express';
 import connectDB from './config/db.js';
 import dotenv from 'dotenv';
+
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import addressRouter from "./routes/address.routes.js";
-import cookieParser from "cookie-parser";
 import categoryRouter from "./routes/category.routes.js";
+import productRouter from "./routes/product.routes.js";
+
+import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/error.middleware.js";
 dotenv.config();
 
@@ -22,6 +25,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/addresses', addressRouter);
 app.use('/api/categories', categoryRouter);
+app.use('/api/products', productRouter);
 
 // Error handling middleware
 app.use(errorHandler);
