@@ -8,6 +8,7 @@ import addressRouter from "./routes/address.routes.js";
 import categoryRouter from "./routes/category.routes.js";
 import productRouter from "./routes/product.routes.js";
 import inventoryRouter from "./routes/inventory.routes.js";
+import reservationRouter from "./routes/reservation.routes.js";
 
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/error.middleware.js";
@@ -28,6 +29,7 @@ app.use('/api/addresses', addressRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
 app.use('/api/inventory', inventoryRouter);
+app.use('/api/reservations', reservationRouter);
 
 // Error handling middleware
 app.use(errorHandler);
