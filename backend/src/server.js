@@ -10,6 +10,11 @@ import productRouter from "./routes/product.routes.js";
 import inventoryRouter from "./routes/inventory.routes.js";
 import reservationRouter from "./routes/reservation.routes.js";
 
+//test 
+// import { expireReservations } from "./services/reservation.service.js";
+// start a job to check for expired reservations and release them
+import { startReservationExpiryJob } from "./jobs/reservation.job.js";
+
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/error.middleware.js";
 dotenv.config();
@@ -36,6 +41,11 @@ app.use(errorHandler);
 
 // Call the db method
 connectDB();
+
+// Start the reservation expiry job
+startReservationExpiryJob();
+
+// await expireReservations();
 
 app.listen(PORT, () => {
     console.log(`Server executing live on port http://localhost:5000`);

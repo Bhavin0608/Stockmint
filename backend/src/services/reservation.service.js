@@ -151,3 +151,43 @@ export const releaseReservation = async (
   return reservation;
 };
 
+export const expireReservations = async () => {
+  const now = new Date();
+
+  const expiredReservations = await Reservation.find({
+    status: "active",
+    expiresAt: { $lte: now },
+  });
+
+  for (const reservation of expiredReservations) {
+    const inventory = await Inventory.findOneAndUpdate(
+      {
+        variantId: reservation.variantId,
+        reservedQuantity: {
+          $gte: reservation.quantity,
+        },
+      },
+      {
+        $inc: {
+          reservedQuantity: -reservation.quantity,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!inventory) {
+      console.error(
+        `Failed to release inventory for reservation ${reservation._id}`
+      );
+
+      continue;
+    }
+
+    reservation.status = "expired";
+    await reservation.save();
+  }
+
+  return expiredReservations.length;
+};
