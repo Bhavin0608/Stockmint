@@ -10,7 +10,7 @@ import productRouter from "./routes/product.routes.js";
 import inventoryRouter from "./routes/inventory.routes.js";
 import reservationRouter from "./routes/reservation.routes.js";
 import cartRouter from "./routes/cart.routes.js";
-
+import orderRouter from "./routes/order.routes.js";
 //test 
 // import { expireReservations } from "./services/reservation.service.js";
 
@@ -38,6 +38,8 @@ app.use('/api/products', productRouter);
 app.use('/api/inventory', inventoryRouter);
 app.use('/api/reservations', reservationRouter);
 app.use('/api/cart', cartRouter);
+app.use('/api/orders', orderRouter);
+
 // Error handling middleware
 app.use(errorHandler);
 
