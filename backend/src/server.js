@@ -9,9 +9,11 @@ import categoryRouter from "./routes/category.routes.js";
 import productRouter from "./routes/product.routes.js";
 import inventoryRouter from "./routes/inventory.routes.js";
 import reservationRouter from "./routes/reservation.routes.js";
+import cartRouter from "./routes/cart.routes.js";
 
 //test 
 // import { expireReservations } from "./services/reservation.service.js";
+
 // start a job to check for expired reservations and release them
 import { startReservationExpiryJob } from "./jobs/reservation.job.js";
 
@@ -35,7 +37,7 @@ app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
 app.use('/api/inventory', inventoryRouter);
 app.use('/api/reservations', reservationRouter);
-
+app.use('/api/cart', cartRouter);
 // Error handling middleware
 app.use(errorHandler);
 
