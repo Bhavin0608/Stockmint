@@ -61,7 +61,7 @@ export const reserveInventory = async (
       },
     },
     {
-      new: true,
+      returnDocument: "after",
     }
   );
 
@@ -133,7 +133,7 @@ export const releaseReservation = async (
       },
     },
     {
-      new: true,
+      returnDocument: "after",
     }
   );
 
@@ -173,7 +173,7 @@ export const expireReservations = async () => {
         },
       },
       {
-        new: true,
+        returnDocument: "after",
       }
     );
 

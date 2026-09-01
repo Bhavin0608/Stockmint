@@ -39,7 +39,7 @@ export const updateInventory = async (
       },
     },
     {
-      new: true,
+      returnDocument: "after",
       upsert: true,
       runValidators: true,
     }
