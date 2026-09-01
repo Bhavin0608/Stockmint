@@ -88,7 +88,10 @@ export const prepareOrderItems = async (cart) => {
 
 export const reserveInventoryForCheckout = async (
   userId,
-  orderItems
+  orderId,
+  orderItems,
+  //session is passed to ensure that the inventory reservation and order creation are part of the same transaction, allowing for rollback in case of errors.
+  session
 ) => {
   const reservations = [];
 
@@ -115,7 +118,8 @@ export const reserveInventoryForCheckout = async (
           },
         },
         {
-          new: true,
+          returnDocument: "after",
+          session
         }
       );
 
@@ -125,15 +129,21 @@ export const reserveInventoryForCheckout = async (
         );
       }
 
-      const reservation = await Reservation.create({
-        userId,
-        variantId: item.variantId,
-        quantity: item.quantity,
-        status: "active",
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-      });
+      const reservation = await Reservation.create(
+      [
+        {
+          orderId,
+          userId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          status: "active",
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        },
+      ],
+        { session }
+      );
 
-      reservations.push(reservation);
+      reservations.push(reservation[0]);
     }
 
     return reservations;
@@ -167,7 +177,8 @@ export const createPendingOrder = async (
   userId,
   orderItems,
   address,
-  subtotal
+  subtotal,
+  session
 ) => {
   const shippingAddress = {
     fullName: address.fullName,
@@ -180,15 +191,107 @@ export const createPendingOrder = async (
     country: address.country,
   };
 
-  const order = await Order.create({
-    userId,
-    items: orderItems,
-    shippingAddress,
-    subtotal,
-    totalAmount: subtotal,
-    status: "pending",
-    paymentStatus: "pending",
-  });
+  const order = await Order.create([
+    {
+      userId,
+      items: orderItems,
+      shippingAddress,
+      subtotal,
+      totalAmount: subtotal,
+      status: "pending",
+      paymentStatus: "pending",
+    },
+  ], { session });
 
-  return order;
+  return order[0];
+};
+
+export const processCheckout = async (
+  userId,
+  addressId
+) => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    const cart = await validateCheckoutCart(userId);
+
+    const address = await validateCheckoutAddress(
+      userId,
+      addressId
+    );
+
+    const { orderItems, subtotal } =
+      await prepareOrderItems(cart);
+
+    const order = await createPendingOrder(
+      userId,
+      orderItems,
+      address,
+      subtotal,
+      session
+    );
+
+    const reservations =
+      await reserveInventoryForCheckout(
+        userId,
+        order._id,
+        orderItems,
+        session
+      );
+
+    await session.commitTransaction();
+
+    return {
+      order,
+      reservations,
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const convertReservation = async (
+  reservation,
+  session
+) => {
+  const inventory = await Inventory.findOneAndUpdate(
+    {
+      variantId: reservation.variantId,
+      reservedQuantity: {
+        $gte: reservation.quantity,
+      },
+    },
+    {
+      $inc: {
+        quantity: -reservation.quantity,
+        reservedQuantity: -reservation.quantity,
+      },
+    },
+    {
+      returnDocument: "after",
+      session,
+    }
+  );
+
+  if (!inventory) {
+    const error = new Error(
+      "Unable to convert reservation"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  reservation.status = "converted";
+
+  await reservation.save({ session });
+
+  return {
+    inventory,
+    reservation,
+  };
 };

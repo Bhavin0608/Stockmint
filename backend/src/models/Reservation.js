@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const reservationSchema = new mongoose.Schema(
   {
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+      index: true,
+    },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
