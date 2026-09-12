@@ -90,46 +90,46 @@ export const reserveInventoryForCheckout = async (
   userId,
   orderId,
   orderItems,
-  //session is passed to ensure that the inventory reservation and order creation are part of the same transaction, allowing for rollback in case of errors.
   session
 ) => {
   const reservations = [];
 
-  try {
-    for (const item of orderItems) {
-      const inventory = await Inventory.findOneAndUpdate(
-        {
-          variantId: item.variantId,
-          $expr: {
-            $gte: [
-              {
-                $subtract: [
-                  "$quantity",
-                  "$reservedQuantity",
-                ],
-              },
-              item.quantity,
-            ],
-          },
+  for (const item of orderItems) {
+    const inventory = await Inventory.findOneAndUpdate(
+      {
+        variantId: item.variantId,
+        $expr: {
+          $gte: [
+            {
+              $subtract: [
+                "$quantity",
+                "$reservedQuantity",
+              ],
+            },
+            item.quantity,
+          ],
         },
-        {
-          $inc: {
-            reservedQuantity: item.quantity,
-          },
+      },
+      {
+        $inc: {
+          reservedQuantity: item.quantity,
         },
-        {
-          returnDocument: "after",
-          session
-        }
-      );
-
-      if (!inventory) {
-        throw new Error(
-          `Insufficient inventory for variant ${item.variantId}`
-        );
+      },
+      {
+        returnDocument: "after",
+        session,
       }
+    );
 
-      const reservation = await Reservation.create(
+    if (!inventory) {
+      const error = new Error(
+        `Insufficient inventory for variant ${item.variantId}`
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const reservation = await Reservation.create(
       [
         {
           orderId,
@@ -137,40 +137,18 @@ export const reserveInventoryForCheckout = async (
           variantId: item.variantId,
           quantity: item.quantity,
           status: "active",
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          expiresAt: new Date(
+            Date.now() + 15 * 60 * 1000
+          ),
         },
       ],
-        { session }
-      );
+      { session }
+    );
 
-      reservations.push(reservation[0]);
-    }
-
-    return reservations;
-  } catch (error) {// Most important part is to roll back any reservations that were successfully created before the error occurred. This ensures that the inventory remains accurate and prevents over-reservation of stock.
-    // Roll back reservations already created
-    for (const reservation of reservations) {
-      await Inventory.findOneAndUpdate(
-        {
-          variantId: reservation.variantId,
-          reservedQuantity: {
-            $gte: reservation.quantity,
-          },
-        },
-        {
-          $inc: {
-            reservedQuantity: -reservation.quantity,
-          },
-        }
-      );
-
-      await Reservation.findByIdAndDelete(
-        reservation._id
-      );
-    }
-
-    throw error;
+    reservations.push(reservation[0]);
   }
+
+  return reservations;
 };
 
 export const createPendingOrder = async (
@@ -398,4 +376,264 @@ export const clearCart = async (userId, session) => {
   }
 
   return cart;
+};
+
+// restore inventory if order is canclled
+export const restoreInventoryForOrder = async (
+  order,
+  session
+) => {
+  for (const item of order.items) {
+    const inventory = await Inventory.findOneAndUpdate(
+      {
+        variantId: item.variantId,
+      },
+      {
+        $inc: {
+          quantity: item.quantity,
+        },
+      },
+      {
+        new: true,
+        session,
+      }
+    );
+
+    if (!inventory) {
+      const error = new Error(
+        `Inventory not found for variant ${item.variantId}`
+      );
+
+      error.statusCode = 404;
+
+      throw error;
+    }
+  }
+
+  return true;
+};
+
+export const cancelOrder = async (
+  userId,
+  orderId
+) => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    const order = await Order.findOne({
+      _id: orderId,
+      userId,
+    }).session(session);
+
+    if (!order) {
+      const error = new Error(
+        "Order not found"
+      );
+
+      error.statusCode = 404;
+
+      throw error;
+    }
+
+    if (order.status !== "confirmed") {
+      const error = new Error(
+        "Only confirmed orders can be cancelled"
+      );
+
+      error.statusCode = 400;
+
+      throw error;
+    }
+
+    await restoreInventoryForOrder(
+      order,
+      session
+    );
+
+    order.status = "cancelled";
+
+    await order.save({ session });
+
+    await session.commitTransaction();
+
+    return order;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const getUserOrders = async (userId) => {
+  const orders = await Order.find({
+    userId,
+  }).sort({
+    createdAt: -1,
+  });
+
+  return orders;
+};
+
+export const getOrderById = async (
+  userId,
+  orderId
+) => {
+  if (!mongoose.isValidObjectId(orderId)) {
+    const error = new Error(
+      "Invalid order ID"
+    );
+
+    error.statusCode = 400;
+
+    throw error;
+  }
+
+  const order = await Order.findOne({
+    _id: orderId,
+    userId,
+  });
+
+  if (!order) {
+    const error = new Error(
+      "Order not found"
+    );
+
+    error.statusCode = 404;
+
+    throw error;
+  }
+
+  return order;
+};
+
+// This is for admin only : ADMIN
+export const getAllOrders = async () => {
+  const orders = await Order.find()
+    .sort({ createdAt: -1 });
+
+  return orders;
+};
+
+export const getOrderByIdAdmin = async(
+  orderId
+) => {
+  if(!mongoose.isValidObjectId(orderId)){
+    const error = new Error("Invalid order ID");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const order = await Order.findById(orderId);
+
+  if(!order){
+    const error = new Error("Order not found");
+    error.statusCode = 404;
+    throw error;
+  }
+  return order;
+}
+
+export const updateOrderStatus = async (
+  orderId,
+  newStatus
+) => {
+  if (!mongoose.isValidObjectId(orderId)) {
+    const error = new Error("Invalid order ID");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const allowedStatuses = [
+    "pending",
+    "confirmed",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ];
+  const allowedStatusTransitions = {
+    pending: [],
+    confirmed: ["shipped", "cancelled"],
+    shipped: ["delivered"],
+    delivered: [],
+    cancelled: [],
+  };
+
+  if (!allowedStatuses.includes(newStatus)) {
+    const error = new Error("Invalid order status");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    const error = new Error("Order not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const allowedNextStatuses =
+    allowedStatusTransitions[order.status];
+
+  if (!allowedNextStatuses.includes(newStatus)) {
+    const error = new Error(
+      `Cannot change order status from ${order.status} to ${newStatus}`
+    );
+
+    error.statusCode = 400;
+    throw error;
+  }
+
+  order.status = newStatus;
+
+  await order.save();
+
+  return order;
+};
+
+export const adminCancelOrder = async (orderId) => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    const order = await Order.findOne({
+      _id: orderId,
+    }).session(session);
+
+    if (!order) {
+      const error = new Error("Order not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (order.status !== "confirmed") {
+      const error = new Error(
+        "Only confirmed orders can be cancelled"
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    await restoreInventoryForOrder(
+      order,
+      session
+    );
+
+    order.status = "cancelled";
+
+    await order.save({ session });
+
+    await session.commitTransaction();
+
+    return order;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
 };

@@ -11,6 +11,7 @@ import inventoryRouter from "./routes/inventory.routes.js";
 import reservationRouter from "./routes/reservation.routes.js";
 import cartRouter from "./routes/cart.routes.js";
 import orderRouter from "./routes/order.routes.js";
+import adminOrderRouter from "./routes/adminorder.routes.js";
 //test 
 // import { expireReservations } from "./services/reservation.service.js";
 
@@ -39,6 +40,7 @@ app.use('/api/inventory', inventoryRouter);
 app.use('/api/reservations', reservationRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/admin/orders', adminOrderRouter);
 
 // Error handling middleware
 app.use(errorHandler);
