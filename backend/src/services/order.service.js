@@ -241,6 +241,23 @@ export const processCheckout = async (
         session
       );
 
+    // Convert active reservations into actual stock deduction
+    await convertOrderReservations(
+      order._id,
+      session
+    );
+    
+    //Confirm Order and clear the cart after successful reservation and conversion
+    await confirmOrder(
+      order._id,
+      session
+    );
+
+    await clearCart(
+      userId,
+      session
+    );
+
     await session.commitTransaction();
 
     return {
@@ -294,4 +311,91 @@ export const convertReservation = async (
     inventory,
     reservation,
   };
+};
+
+// Now one user have many product to reserve, so we need to convert all reservations for a user to inventory. This function will handle that by finding all active reservations for the user and converting them one by one.
+export const convertOrderReservations = async (
+  orderId,
+  session
+) => {
+  const reservations = await Reservation.find({
+    orderId,
+    status: "active",
+  }).session(session);
+
+  if (reservations.length === 0) {
+    const error = new Error(
+      "No active reservations found for order"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const convertedReservations = [];
+
+  for (const reservation of reservations) {
+    const result = await convertReservation(
+      reservation,
+      session
+    );
+
+    convertedReservations.push(result.reservation);
+  }
+
+  return convertedReservations;
+};
+
+//Conform order 
+export const confirmOrder = async (orderId, session) => {
+  const order = await Order.findOneAndUpdate(
+    {
+      _id: orderId,
+      status: "pending",
+    },
+    {
+      $set: {
+        status: "confirmed",
+      },
+    },
+    {
+      new: true,
+      session,
+    }
+  );
+
+  if (!order) {
+    const error = new Error(
+      "Unable to confirm order"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return order;
+};
+
+//Clearing the cart
+export const clearCart = async (userId, session) => {
+  const cart = await Cart.findOneAndUpdate(
+    { userId },
+    {
+      $set: {
+        items: [],
+      },
+    },
+    {
+      new: true,
+      session,
+    }
+  );
+
+  if (!cart) {
+    const error = new Error(
+      "Cart not found"
+    );
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return cart;
 };
