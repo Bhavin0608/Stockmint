@@ -1,6 +1,7 @@
 import express from 'express';
 import connectDB from './config/db.js';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
@@ -25,6 +26,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// cors is browser access policy.
+// Enable CORS for requests from the frontend
+// It sync the frontend and backend ports to avoid CORS issues. The frontend is running on port 5173 and the backend on port 5000. The credentials: true option allows cookies to be sent with requests, which is necessary for authentication.
+app.use(cors({
+    origin: "http://localhost:5173", 
+    credentials: true,
+}));
 // Middleware to parse incoming JSON payloads
 app.use(express.json());
 app.use(cookieParser()); // it is use to convert browser cookies into a readable format for the server. it is used to read the refresh token from the cookie in the login route.
