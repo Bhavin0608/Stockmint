@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import { ApiError } from "../utils/ApiError.js";
 import { verifyAccessToken } from "../utils/jwt.js";
 
 export const authenticateUser = async (req, res, next) => {
@@ -7,9 +8,7 @@ export const authenticateUser = async (req, res, next) => {
 
     // Check whether Authorization header exists
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      const error = new Error("Authentication required");
-      error.statusCode = 401;
-      throw error;
+      throw new ApiError(401, "Authentication required");
     }
 
     // Extract JWT from: "Bearer <token>"
@@ -22,16 +21,12 @@ export const authenticateUser = async (req, res, next) => {
     const user = await User.findById(decoded.userId);
 
     if (!user) {
-      const error = new Error("User no longer exists");
-      error.statusCode = 401;
-      throw error;
+      throw new ApiError(401, "User no longer exists");
     }
 
     // Check current account status
     if (user.status !== "active") {
-      const error = new Error("Account is blocked");
-      error.statusCode = 403;
-      throw error;
+      throw new ApiError(403, "Account is blocked");
     }
 
     // Make authenticated user available to later middleware/controllers

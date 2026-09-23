@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Cart from "../models/Cart.js";
 import ProductVariant from "../models/ProductVariant.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const addToCart = async (
   userId,
@@ -8,17 +9,11 @@ export const addToCart = async (
   quantity
 ) => {
   if (!mongoose.isValidObjectId(variantId)) {
-    const error = new Error("Invalid variant ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid variant ID");
   }
 
   if (!Number.isInteger(quantity) || quantity < 1) {
-    const error = new Error(
-      "Quantity must be a positive integer"
-    );
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Quantity must be a positive integer");
   }
 
   const variant = await ProductVariant.findOne({
@@ -27,9 +22,7 @@ export const addToCart = async (
   });
 
   if (!variant) {
-    const error = new Error("Active variant not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Active variant not found");
   }
 
   // is user have cart or not
@@ -97,25 +90,17 @@ export const updateCartItem = async (
   quantity
 ) => {
   if (!mongoose.isValidObjectId(variantId)) {
-    const error = new Error("Invalid variant ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid variant ID");
   }
 
   if (!Number.isInteger(quantity) || quantity < 1) {
-    const error = new Error(
-      "Quantity must be a positive integer"
-    );
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Quantity must be a positive integer");
   }
 
   const cart = await Cart.findOne({ userId });
 
   if (!cart) {
-    const error = new Error("Cart not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Cart not found");
   }
 
   const item = cart.items.find(
@@ -123,9 +108,7 @@ export const updateCartItem = async (
   );
 
   if (!item) {
-    const error = new Error("Item not found in cart");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Item not found in cart");
   }
 
   item.quantity = quantity;
@@ -137,17 +120,13 @@ export const updateCartItem = async (
 
 export const removeFromCart = async (userId, variantId) => {
   if (!mongoose.isValidObjectId(variantId)) {
-    const error = new Error("Invalid variant ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid variant ID");
   }
 
   const cart = await Cart.findOne({ userId });
 
   if (!cart) {
-    const error = new Error("Cart not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Cart not found");
   }
 
   const itemIndex = cart.items.findIndex(
@@ -155,9 +134,7 @@ export const removeFromCart = async (userId, variantId) => {
   );
 
   if (itemIndex === -1) { // Index does not exist, meaning the item is not in the cart
-    const error = new Error("Item not found in cart");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Item not found in cart");
   }
 
   cart.items.splice(itemIndex, 1); // remove the item from the cart using splice method

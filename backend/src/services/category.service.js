@@ -1,5 +1,6 @@
 import Category from "../models/Category.js";
 import mongoose from "mongoose";
+import { ApiError } from "../utils/ApiError.js";
 
 export const createCategory = async ({
   name,
@@ -17,9 +18,7 @@ export const createCategory = async ({
   });
 
   if (existingCategory) {
-    const error = new Error("Category already exists");
-    error.statusCode = 409;
-    throw error;
+    throw new ApiError(409, "Category already exists");
   }
 
   const category = await Category.create({
@@ -43,17 +42,13 @@ export const getCategories = async () => {
 
 export const getCategoryById = async (categoryId) => {
   if (!mongoose.isValidObjectId(categoryId)) {
-    const error = new Error("Invalid category ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid category ID");
   }
 
   const category = await Category.findById(categoryId);
 
   if (!category) {
-    const error = new Error("Category not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Category not found");
   }
 
   return category;
@@ -61,17 +56,13 @@ export const getCategoryById = async (categoryId) => {
 
 export const updateCategory = async (categoryId, updates) => {
   if (!mongoose.isValidObjectId(categoryId)) {
-    const error = new Error("Invalid category ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid category ID");
   }
 
   const category = await Category.findById(categoryId);
 
   if (!category) {
-    const error = new Error("Category not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Category not found");
   }
 
   const allowedFields = [
@@ -96,9 +87,7 @@ export const updateCategory = async (categoryId, updates) => {
   });
 
   if (duplicate) {
-    const error = new Error("Category already exists");
-    error.statusCode = 409;
-    throw error;
+    throw new ApiError(409, "Category already exists");
   }
 
   await category.save();
@@ -108,17 +97,13 @@ export const updateCategory = async (categoryId, updates) => {
 
 export const deleteCategory = async (categoryId) => {
   if (!mongoose.isValidObjectId(categoryId)) {
-    const error = new Error("Invalid category ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid category ID");
   }
 
   const category = await Category.findById(categoryId);
 
   if (!category) {
-    const error = new Error("Category not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Category not found");
   }
 
   category.isActive = false; // Mark the category as inactive instead of deleting it, soft delete

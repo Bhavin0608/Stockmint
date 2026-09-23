@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import ProductVariant from "../models/ProductVariant.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const createVariant = async ({
   productId,
@@ -10,9 +11,7 @@ export const createVariant = async ({
   compareAtPrice,
 }) => {
   if (!mongoose.isValidObjectId(productId)) {
-    const error = new Error("Invalid product ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid product ID");
   }
 
   const product = await Product.findOne({
@@ -21,33 +20,19 @@ export const createVariant = async ({
   });
 
   if (!product) {
-    const error = new Error("Active product not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Active product not found");
   }
 
-  if (
-    compareAtPrice !== undefined &&
-    compareAtPrice !== null &&
-    Number(compareAtPrice) < Number(price)
-  ) {
-    const error = new Error(
-      "Compare-at price cannot be lower than price"
-    );
-    error.statusCode = 400;
-    throw error;
+  if (compareAtPrice !== undefined && compareAtPrice !== null && Number(compareAtPrice) < Number(price)) {
+    throw new ApiError(400, "Compare-at price cannot be lower than price");
   }
 
   const normalizedSku = sku.trim().toUpperCase();
 
-  const existingVariant = await ProductVariant.findOne({
-    sku: normalizedSku,
-  });
+  const existingVariant = await ProductVariant.findOne({sku: normalizedSku,});
 
   if (existingVariant) {
-    const error = new Error("SKU already exists");
-    error.statusCode = 409;
-    throw error;
+    throw new ApiError(409, "SKU already exists");
   }
 
   const variant = await ProductVariant.create({
@@ -64,20 +49,13 @@ export const createVariant = async ({
 
 export const getProductVariants = async (productId) => {
   if (!mongoose.isValidObjectId(productId)) {
-    const error = new Error("Invalid product ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid product ID");
   }
 
-  const product = await Product.findOne({
-    _id: productId,
-    status: "active",
-  });
+  const product = await Product.findOne({_id: productId, status: "active",});
 
   if (!product) {
-    const error = new Error("Product not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Product not found");
   }
 
   const variants = await ProductVariant.find({
@@ -95,9 +73,7 @@ export const getVariantById = async (productId, variantId) => {
     !mongoose.isValidObjectId(productId) ||
     !mongoose.isValidObjectId(variantId)
   ) {
-    const error = new Error("Invalid product or variant ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid product or variant ID");
   }
 
   const variant = await ProductVariant.findOne({
@@ -107,9 +83,7 @@ export const getVariantById = async (productId, variantId) => {
   });
 
   if (!variant) {
-    const error = new Error("Variant not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Variant not found");
   }
 
   return variant;
@@ -120,13 +94,8 @@ export const updateVariant = async (
   variantId,
   updates
 ) => {
-  if (
-    !mongoose.isValidObjectId(productId) ||
-    !mongoose.isValidObjectId(variantId)
-  ) {
-    const error = new Error("Invalid product or variant ID");
-    error.statusCode = 400;
-    throw error;
+  if (!mongoose.isValidObjectId(productId) || !mongoose.isValidObjectId(variantId)) {
+    throw new ApiError(400, "Invalid product or variant ID");
   }
 
   const product = await Product.findOne({
@@ -135,9 +104,7 @@ export const updateVariant = async (
   });
 
   if (!product) {
-    const error = new Error("Product not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Product not found");
   }
 
   const variant = await ProductVariant.findOne({
@@ -146,9 +113,7 @@ export const updateVariant = async (
   });
 
   if (!variant) {
-    const error = new Error("Variant not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Variant not found");
   }
 
   if (updates.sku !== undefined) {
@@ -160,9 +125,7 @@ export const updateVariant = async (
     });
 
     if (existingVariant) {
-      const error = new Error("SKU already exists");
-      error.statusCode = 409;
-      throw error;
+      throw new ApiError(409, "SKU already exists");
     }
 
     variant.sku = normalizedSku;
@@ -174,9 +137,7 @@ export const updateVariant = async (
         updates.attributes === null ||
         Array.isArray(updates.attributes)
     ) {
-        const error = new Error("Invalid attributes");
-        error.statusCode = 400;
-        throw error;
+        throw new ApiError(400, "Invalid attributes");
     }
 
     for (const [key, value] of Object.entries(updates.attributes)) {
@@ -190,9 +151,7 @@ export const updateVariant = async (
 
   if (updates.price !== undefined) {
     if (Number(updates.price) < 0) {
-      const error = new Error("Price cannot be negative");
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, "Price cannot be negative");
     }
 
     variant.price = updates.price;
@@ -203,11 +162,7 @@ export const updateVariant = async (
       updates.compareAtPrice !== null &&
       Number(updates.compareAtPrice) < 0
     ) {
-      const error = new Error(
-        "Compare-at price cannot be negative"
-      );
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, "Compare-at price cannot be negative");
     }
 
     variant.compareAtPrice = updates.compareAtPrice;
@@ -218,11 +173,7 @@ export const updateVariant = async (
     variant.compareAtPrice !== undefined &&
     Number(variant.compareAtPrice) < Number(variant.price)
   ) {
-    const error = new Error(
-      "Compare-at price cannot be lower than price"
-    );
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Compare-at price cannot be lower than price");
   }
 
   if (updates.isActive !== undefined) {
@@ -239,9 +190,7 @@ export const deleteVariant = async (productId, variantId) => {
     !mongoose.isValidObjectId(productId) ||
     !mongoose.isValidObjectId(variantId)
   ) {
-    const error = new Error("Invalid product or variant ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid product or variant ID");
   }
 
   const variant = await ProductVariant.findOne({
@@ -250,9 +199,7 @@ export const deleteVariant = async (productId, variantId) => {
   });
 
   if (!variant) {
-    const error = new Error("Variant not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Variant not found");
   }
 
   variant.isActive = false;

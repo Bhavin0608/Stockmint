@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const createProduct = async ({
   categoryId,
@@ -12,9 +13,7 @@ export const createProduct = async ({
   images,
 }) => {
   if (!mongoose.isValidObjectId(categoryId)) {
-    const error = new Error("Invalid category ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid category ID");
   }
 
   const category = await Category.findOne({
@@ -23,9 +22,7 @@ export const createProduct = async ({
   });
 
   if (!category) {
-    const error = new Error("Active category not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Active category not found");
   }
 
   const normalizedName = name.trim();
@@ -36,9 +33,7 @@ export const createProduct = async ({
   });
 
   if (existingProduct) {
-    const error = new Error("Product slug already exists");
-    error.statusCode = 409;
-    throw error;
+    throw new ApiError(409, "Product slug already exists");
   }
 
   const product = await Product.create({
@@ -71,9 +66,7 @@ export const getProducts = async ({
 
   if (categoryId) {
     if (!mongoose.isValidObjectId(categoryId)) {
-      const error = new Error("Invalid category ID");
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, "Invalid category ID");
     }
 
     filter.categoryId = categoryId;
@@ -105,9 +98,7 @@ export const getProducts = async ({
 
 export const getProductById = async (productId) => {
   if (!mongoose.isValidObjectId(productId)) {
-    const error = new Error("Invalid product ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid product ID");
   }
 
   const product = await Product.findOne({
@@ -116,9 +107,7 @@ export const getProductById = async (productId) => {
   }).populate("categoryId", "name slug");
 
   if (!product) {
-    const error = new Error("Product not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Product not found");
   }
 
   return product;
@@ -126,17 +115,13 @@ export const getProductById = async (productId) => {
 
 export const updateProduct = async (productId, updates) => {
   if (!mongoose.isValidObjectId(productId)) {
-    const error = new Error("Invalid product ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid product ID");
   }
 
   const product = await Product.findById(productId);
 
   if (!product) {
-    const error = new Error("Product not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Product not found");
   }
 
   const allowedFields = [
@@ -158,9 +143,7 @@ export const updateProduct = async (productId, updates) => {
 
   if (updates.categoryId !== undefined) {
     if (!mongoose.isValidObjectId(updates.categoryId)) {
-      const error = new Error("Invalid category ID");
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, "Invalid category ID");
     }
 
     const category = await Category.findOne({
@@ -169,9 +152,7 @@ export const updateProduct = async (productId, updates) => {
     });
 
     if (!category) {
-      const error = new Error("Active category not found");
-      error.statusCode = 404;
-      throw error;
+      throw new ApiError(404, "Active category not found");
     }
 
     product.categoryId = updates.categoryId;
@@ -184,9 +165,7 @@ export const updateProduct = async (productId, updates) => {
     });
 
     if (existingProduct) {
-      const error = new Error("Product slug already exists");
-      error.statusCode = 409;
-      throw error;
+      throw new ApiError(409, "Product slug already exists");
     }
   }
 
@@ -197,17 +176,13 @@ export const updateProduct = async (productId, updates) => {
 
 export const deleteProduct = async (productId) => {
   if (!mongoose.isValidObjectId(productId)) {
-    const error = new Error("Invalid product ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid product ID");
   }
 
   const product = await Product.findById(productId);
 
   if (!product) {
-    const error = new Error("Product not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Product not found");
   }
 
   product.status = "archived";

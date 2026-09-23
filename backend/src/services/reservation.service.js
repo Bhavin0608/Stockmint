@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Inventory from "../models/Inventory.js";
 import ProductVariant from "../models/ProductVariant.js";
 import Reservation from "../models/Reservation.js";
+import { ApiError } from "../utils/ApiError.js";
 
 const RESERVATION_DURATION_MS = 15 * 60 * 1000;
 
@@ -11,17 +12,11 @@ export const reserveInventory = async (
   quantity
 ) => {
   if (!mongoose.isValidObjectId(variantId)) {
-    const error = new Error("Invalid variant ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid variant ID");
   }
 
   if (!Number.isInteger(quantity) || quantity < 1) {
-    const error = new Error(
-      "Quantity must be a positive integer"
-    );
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Quantity must be a positive integer");
   }
 
   const variant = await ProductVariant.findOne({
@@ -30,9 +25,7 @@ export const reserveInventory = async (
   });
 
   if (!variant) {
-    const error = new Error("Active variant not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Active variant not found");
   }
 
   const expiresAt = new Date(
@@ -66,9 +59,7 @@ export const reserveInventory = async (
   );
 
   if (!inventory) {
-    const error = new Error("Insufficient inventory");
-    error.statusCode = 409;
-    throw error;
+    throw new ApiError(409, "Insufficient inventory");
   }
 
   try {
@@ -103,9 +94,7 @@ export const releaseReservation = async (
   reservationId
 ) => {
   if (!mongoose.isValidObjectId(reservationId)) {
-    const error = new Error("Invalid reservation ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid reservation ID");
   }
 
   const reservation = await Reservation.findOne({
@@ -115,9 +104,7 @@ export const releaseReservation = async (
   });
 
   if (!reservation) {
-    const error = new Error("Active reservation not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Active reservation not found");
   }
 
   const inventory = await Inventory.findOneAndUpdate(
@@ -138,11 +125,7 @@ export const releaseReservation = async (
   );
 
   if (!inventory) {
-    const error = new Error(
-      "Unable to release reserved inventory"
-    );
-    error.statusCode = 409;
-    throw error;
+    throw new ApiError(409, "Unable to release reserved inventory");
   }
 
   reservation.status = "released";
@@ -178,11 +161,7 @@ export const expireReservations = async () => {
     );
 
     if (!inventory) {
-      console.error(
-        `Failed to release inventory for reservation ${reservation._id}`
-      );
-
-      continue;
+      throw new ApiError(409, "Unable to release reserved inventory for expired reservation");
     }
 
     reservation.status = "expired";

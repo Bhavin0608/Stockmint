@@ -5,20 +5,17 @@ import ProductVariant from "../models/ProductVariant.js";
 import Inventory from "../models/Inventory.js";
 import Reservation from "../models/Reservation.js";
 import Order from "../models/Order.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const validateCheckoutCart = async (userId) => {
   const cart = await Cart.findOne({ userId });
 
   if (!cart) {
-    const error = new Error("Cart not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Cart not found");
   }
 
   if (cart.items.length === 0) {
-    const error = new Error("Cart is empty");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Cart is empty");
   }
 
   return cart;
@@ -29,9 +26,7 @@ export const validateCheckoutAddress = async (
   addressId
 ) => {
   if (!mongoose.isValidObjectId(addressId)) {
-    const error = new Error("Invalid address ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid address ID");
   }
 
   const address = await Address.findOne({
@@ -40,9 +35,7 @@ export const validateCheckoutAddress = async (
   });
 
   if (!address) {
-    const error = new Error("Address not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Address not found");
   }
 
   return address;
@@ -59,11 +52,7 @@ export const prepareOrderItems = async (cart) => {
     }).populate("productId", "name");
 
     if (!variant) {
-      const error = new Error(
-        "One or more products in the cart are no longer available"
-      );
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(404, `Product variant not found for variant ID: ${item.variantId}`);
     }
 
     const itemTotal = variant.price * item.quantity;
@@ -122,11 +111,7 @@ export const reserveInventoryForCheckout = async (
     );
 
     if (!inventory) {
-      const error = new Error(
-        `Insufficient inventory for variant ${item.variantId}`
-      );
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(409, `Insufficient stock for variant ID: ${item.variantId}`);
     }
 
     const reservation = await Reservation.create(
@@ -274,11 +259,7 @@ export const convertReservation = async (
   );
 
   if (!inventory) {
-    const error = new Error(
-      "Unable to convert reservation"
-    );
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(409, "Unable to convert reservation due to insufficient stock");
   }
 
   reservation.status = "converted";
@@ -302,11 +283,7 @@ export const convertOrderReservations = async (
   }).session(session);
 
   if (reservations.length === 0) {
-    const error = new Error(
-      "No active reservations found for order"
-    );
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "No active reservations found for order");
   }
 
   const convertedReservations = [];
@@ -342,11 +319,7 @@ export const confirmOrder = async (orderId, session) => {
   );
 
   if (!order) {
-    const error = new Error(
-      "Unable to confirm order"
-    );
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Unable to confirm order");
   }
 
   return order;
@@ -368,11 +341,7 @@ export const clearCart = async (userId, session) => {
   );
 
   if (!cart) {
-    const error = new Error(
-      "Cart not found"
-    );
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Cart not found");
   }
 
   return cart;
@@ -400,13 +369,7 @@ export const restoreInventoryForOrder = async (
     );
 
     if (!inventory) {
-      const error = new Error(
-        `Inventory not found for variant ${item.variantId}`
-      );
-
-      error.statusCode = 404;
-
-      throw error;
+      throw new ApiError(404, `Inventory not found for variant ${item.variantId}`);
     }
   }
 
@@ -428,23 +391,11 @@ export const cancelOrder = async (
     }).session(session);
 
     if (!order) {
-      const error = new Error(
-        "Order not found"
-      );
-
-      error.statusCode = 404;
-
-      throw error;
+      throw new ApiError(404, "Order not found");
     }
 
     if (order.status !== "confirmed") {
-      const error = new Error(
-        "Only confirmed orders can be cancelled"
-      );
-
-      error.statusCode = 400;
-
-      throw error;
+      throw new ApiError(400, "Only confirmed orders can be cancelled");
     }
 
     await restoreInventoryForOrder(
@@ -482,13 +433,7 @@ export const getOrderById = async (
   orderId
 ) => {
   if (!mongoose.isValidObjectId(orderId)) {
-    const error = new Error(
-      "Invalid order ID"
-    );
-
-    error.statusCode = 400;
-
-    throw error;
+    throw new ApiError(400, "Invalid order ID");
   }
 
   const order = await Order.findOne({
@@ -497,13 +442,7 @@ export const getOrderById = async (
   });
 
   if (!order) {
-    const error = new Error(
-      "Order not found"
-    );
-
-    error.statusCode = 404;
-
-    throw error;
+    throw new ApiError(404, "Order not found");
   }
 
   return order;
@@ -521,17 +460,13 @@ export const getOrderByIdAdmin = async(
   orderId
 ) => {
   if(!mongoose.isValidObjectId(orderId)){
-    const error = new Error("Invalid order ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid order ID");
   }
 
   const order = await Order.findById(orderId);
 
   if(!order){
-    const error = new Error("Order not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Order not found");
   }
   return order;
 }
@@ -541,9 +476,7 @@ export const updateOrderStatus = async (
   newStatus
 ) => {
   if (!mongoose.isValidObjectId(orderId)) {
-    const error = new Error("Invalid order ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid order ID");
   }
 
   const allowedStatuses = [
@@ -562,29 +495,20 @@ export const updateOrderStatus = async (
   };
 
   if (!allowedStatuses.includes(newStatus)) {
-    const error = new Error("Invalid order status");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid order status");
   }
 
   const order = await Order.findById(orderId);
 
   if (!order) {
-    const error = new Error("Order not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Order not found");
   }
 
   const allowedNextStatuses =
     allowedStatusTransitions[order.status];
 
   if (!allowedNextStatuses.includes(newStatus)) {
-    const error = new Error(
-      `Cannot change order status from ${order.status} to ${newStatus}`
-    );
-
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, `Cannot change order status from ${order.status} to ${newStatus}`);
   }
 
   order.status = newStatus;
@@ -605,17 +529,11 @@ export const adminCancelOrder = async (orderId) => {
     }).session(session);
 
     if (!order) {
-      const error = new Error("Order not found");
-      error.statusCode = 404;
-      throw error;
+      throw new ApiError(404, "Order not found");
     }
 
     if (order.status !== "confirmed") {
-      const error = new Error(
-        "Only confirmed orders can be cancelled"
-      );
-      error.statusCode = 400;
-      throw error;
+      throw new ApiError(400, "Only confirmed orders can be cancelled");
     }
 
     await restoreInventoryForOrder(

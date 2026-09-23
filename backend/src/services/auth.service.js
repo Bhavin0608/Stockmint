@@ -3,6 +3,7 @@ import RefreshSession from "../models/RefreshSession.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { generateAccessToken } from "../utils/jwt.js";
 import { generateRefreshToken, hashRefreshToken } from "../utils/refreshToken.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const registerUser = async ({ name, email, password }) => {
   // Normalize the email before checking/storing it.
@@ -12,9 +13,7 @@ export const registerUser = async ({ name, email, password }) => {
   const existingUser = await User.findOne({ email: normalizedEmail });
 
   if (existingUser) {
-    const error = new Error("Email is already registered");
-    error.statusCode = 409;
-    throw error;
+    throw new ApiError(409, "Email is already registered");
   }
 
   // Never store the plain-text password.
@@ -48,15 +47,11 @@ export const loginUser = async ({ email, password }) => {
   }).select("+passwordHash");
 
   if (!user) {
-    const error = new Error("Invalid email or password");
-    error.statusCode = 401;
-    throw error;
+    throw new ApiError(401, "Invalid email or password");
   }
 
   if (user.status !== "active") {
-    const error = new Error("Account is blocked");
-    error.statusCode = 403;
-    throw error;
+    throw new ApiError(403, "Account is blocked");
   }
 
   const isPasswordValid = await comparePassword(
@@ -65,9 +60,7 @@ export const loginUser = async ({ email, password }) => {
   );
 
   if (!isPasswordValid) {
-    const error = new Error("Invalid email or password");
-    error.statusCode = 401;
-    throw error;
+    throw new ApiError(401, "Invalid email or password");
   }
   // Generate access token and refresh token for the user.
   const { token: accessToken } = generateAccessToken(user);
@@ -102,9 +95,7 @@ export const loginUser = async ({ email, password }) => {
 
 export const refreshAccessToken = async (refreshToken) => {
   if (!refreshToken) {
-    const error = new Error("Refresh token required");
-    error.statusCode = 401;
-    throw error;
+    throw new ApiError(401, "Refresh token required");
   }
 
   const tokenHash = hashRefreshToken(refreshToken);
@@ -115,29 +106,21 @@ export const refreshAccessToken = async (refreshToken) => {
   });
 
   if (!session) {
-    const error = new Error("Invalid or expired refresh token");
-    error.statusCode = 401;
-    throw error;
+    throw new ApiError(401, "Invalid or expired refresh token");
   }
 
   if (session.expiresAt <= new Date()) {
-    const error = new Error("Refresh token has expired");
-    error.statusCode = 401;
-    throw error;
+    throw new ApiError(401, "Refresh token has expired");
   }
 
   const user = await User.findById(session.userId);
 
   if (!user) {
-    const error = new Error("User no longer exists");
-    error.statusCode = 401;
-    throw error;
+    throw new ApiError(401, "User no longer exists");
   }
 
   if (user.status !== "active") {
-    const error = new Error("Account is blocked");
-    error.statusCode = 403;
-    throw error;
+    throw new ApiError(403, "Account is blocked");
   }
 
   // Generate a completely new refresh token.
@@ -164,9 +147,7 @@ export const refreshAccessToken = async (refreshToken) => {
 
 export const logoutUser = async (refreshToken) => {
   if (!refreshToken) {
-    const error = new Error("Refresh token required");
-    error.statusCode = 401;
-    throw error;
+    throw new ApiError(401, "Refresh token required");
   }
 
   const tokenHash = hashRefreshToken(refreshToken);

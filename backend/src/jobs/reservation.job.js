@@ -9,15 +9,10 @@ export const startReservationExpiryJob = () => {
       const expiredCount = await expireReservations();
 
       if (expiredCount > 0) {
-        console.log(
-          `Expired ${expiredCount} reservation(s)`
-        );
+        console.log(`Expired ${expiredCount} reservation(s)`);
       }
     } catch (error) {
-      console.error(
-        "Reservation expiry job failed:",
-        error
-      );
+      console.error("Reservation expiry job failed:", error);
     }
   });
 };

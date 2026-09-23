@@ -1,23 +1,18 @@
 import mongoose from "mongoose";
 import ProductVariant from "../models/ProductVariant.js";
 import Inventory from "../models/Inventory.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const updateInventory = async (
   variantId,
   quantity
 ) => {
   if (!mongoose.isValidObjectId(variantId)) {
-    const error = new Error("Invalid variant ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid variant ID");
   }
 
   if (!Number.isInteger(quantity) || quantity < 0) {
-    const error = new Error(
-      "Quantity must be a non-negative integer"
-    );
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Quantity must be a non-negative integer");
   }
 
   const variant = await ProductVariant.findOne({
@@ -26,9 +21,7 @@ export const updateInventory = async (
   });
 
   if (!variant) {
-    const error = new Error("Active variant not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Active variant not found");
   }
 
   const inventory = await Inventory.findOneAndUpdate(

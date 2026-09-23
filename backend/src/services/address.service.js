@@ -1,5 +1,6 @@
 import Address from "../models/Address.js";
 import mongoose from "mongoose";
+import { ApiError } from "../utils/ApiError.js";
 
 export const createAddress = async (userId, addressData) => {
   const {
@@ -61,9 +62,7 @@ export const getUserAddresses = async (userId) => {
 
 export const getAddressById = async (userId, addressId) => {
   if (!mongoose.isValidObjectId(addressId)) {
-    const error = new Error("Invalid address ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid address ID");
   }
 
   const address = await Address.findOne({
@@ -72,9 +71,7 @@ export const getAddressById = async (userId, addressId) => {
   });
 
   if (!address) {
-    const error = new Error("Address not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Address not found");
   }
 
   return address;
@@ -82,9 +79,7 @@ export const getAddressById = async (userId, addressId) => {
 
 export const updateAddress = async (userId, addressId, updates) => {
   if (!mongoose.isValidObjectId(addressId)) {
-    const error = new Error("Invalid address ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid address ID");
   }
 
   const address = await Address.findOne({
@@ -93,9 +88,7 @@ export const updateAddress = async (userId, addressId, updates) => {
   });
 
   if (!address) {
-    const error = new Error("Address not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Address not found");
   }
 
   const allowedFields = [
@@ -144,9 +137,7 @@ export const updateAddress = async (userId, addressId, updates) => {
 
 export const deleteAddress = async (userId, addressId) => {
   if (!mongoose.isValidObjectId(addressId)) {
-    const error = new Error("Invalid address ID");
-    error.statusCode = 400;
-    throw error;
+    throw new ApiError(400, "Invalid address ID");
   }
 
   const address = await Address.findOne({
@@ -155,9 +146,7 @@ export const deleteAddress = async (userId, addressId) => {
   });
 
   if (!address) {
-    const error = new Error("Address not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "Address not found");
   }
 
   const wasDefault = address.isDefault;

@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import { ApiError } from "../utils/ApiError.js";
 
 export const updateUserProfile = async (userId, updates) => {
   const allowedUpdates = {};
@@ -22,9 +23,7 @@ export const updateUserProfile = async (userId, updates) => {
   );
 
   if (!user) {
-    const error = new Error("User not found");
-    error.statusCode = 404;
-    throw error;
+    throw new ApiError(404, "User not found");
   }
 
   return {
