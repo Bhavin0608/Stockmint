@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAccessToken } from '../utils/tokenManager';
+import { getAccessToken, setAccessToken } from '../utils/tokenManager';
 
 // What is axios? => It tansfer data between client to server.
 // It send the http request to the server and get the response from the server. 
@@ -21,6 +21,59 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
+        return Promise.reject(error);
+    }
+);
+
+let refreshPromise = null;
+
+const refreshToken = async () => {
+    if (!refreshPromise) {
+        refreshPromise = axios
+            .post(
+                `${import.meta.env.VITE_API_URL}/auth/refresh`,
+                {},
+                { withCredentials: true }
+            )
+            .then((response) => {
+                const newToken = response.data.data.accessToken;
+                setAccessToken(newToken);
+                return newToken;
+            })
+            .finally(() => {
+                refreshPromise = null;
+            });
+    }
+
+    return refreshPromise;
+};
+
+api.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            !originalRequest.url.includes("/auth/refresh")
+        ) {
+            originalRequest._retry = true;
+
+            try {
+                const newToken = await refreshToken();
+
+                originalRequest.headers.Authorization =
+                    `Bearer ${newToken}`;
+
+                return api(originalRequest);
+            } catch (refreshError) {
+                return Promise.reject(refreshError);
+            }
+        }
+
         return Promise.reject(error);
     }
 );
