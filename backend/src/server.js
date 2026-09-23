@@ -62,5 +62,5 @@ startReservationExpiryJob();
 // await expireReservations();
 
 app.listen(PORT, () => {
-    console.log(`Server executing live on port http://localhost:5000`);
+    console.log(`Server executing live on port http://localhost:${PORT}`);
 });

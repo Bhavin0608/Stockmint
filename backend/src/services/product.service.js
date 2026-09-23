@@ -159,8 +159,9 @@ export const updateProduct = async (productId, updates) => {
   }
 
   if (updates.slug !== undefined) {
+    const normalizedSlug = updates.slug.trim().toLowerCase();
     const existingProduct = await Product.findOne({
-      slug: product.slug,
+      slug: normalizedSlug,
       _id: { $ne: productId },
     });
 

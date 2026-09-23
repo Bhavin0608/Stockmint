@@ -41,7 +41,7 @@ const productSchema = new mongoose.Schema(
       default: "draft",
     },
 
-    image: [
+    images: [
         {
             url: { // URL of the image Cloudinary
                 type: String,
