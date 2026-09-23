@@ -1,15 +1,12 @@
 import { createProduct, getProducts, getProductById, updateProduct, deleteProduct } from "../services/product.service.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const create = async (req, res, next) => {
   try {
     const product = await createProduct(req.body);
-
-    return res.status(201).json({
-      success: true,
-      message: "Product created successfully",
-      data: product,
-    });
-  } catch (error) {
+    return new ApiResponse(201, product, "Product created successfully").send(res);
+  } 
+  catch (error) {
     next(error);
   }
 };
@@ -22,17 +19,10 @@ export const getAll = async (req, res, next) => {
       categoryId,
     } = req.query;
 
-    const result = await getProducts({
-      page,
-      limit,
-      categoryId,
-    });
-
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
+    const result = await getProducts({page, limit, categoryId,});
+    return new ApiResponse(200, result, "Products fetched successfully").send(res);
+  } 
+  catch (error) {
     next(error);
   }
 };
@@ -40,29 +30,19 @@ export const getAll = async (req, res, next) => {
 export const getOne = async (req, res, next) => {
   try {
     const product = await getProductById(req.params.id);
-
-    return res.status(200).json({
-      success: true,
-      data: product,
-    });
-  } catch (error) {
+    return new ApiResponse(200, product, "Product fetched successfully").send(res);
+  } 
+  catch (error) {
     next(error);
   }
 };
 
 export const update = async (req, res, next) => {
   try {
-    const product = await updateProduct(
-      req.params.id,
-      req.body
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Product updated successfully",
-      data: product,
-    });
-  } catch (error) {
+    const product = await updateProduct(req.params.id, req.body);
+    return new ApiResponse(200, product, "Product updated successfully").send(res);
+  } 
+  catch (error) {
     next(error);
   }
 };
@@ -70,13 +50,9 @@ export const update = async (req, res, next) => {
 export const remove = async (req, res, next) => {
   try {
     const product = await deleteProduct(req.params.id);
-
-    return res.status(200).json({
-      success: true,
-      message: "Product archived successfully",
-      data: product,
-    });
-  } catch (error) {
+    return new ApiResponse(200, product, "Product archived successfully").send(res);
+  } 
+  catch (error) {
     next(error);
   }
 };

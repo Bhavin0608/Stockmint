@@ -1,3 +1,4 @@
+import { ApiResponse } from "../utils/ApiResponse.js";
 export const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || "Internal Server Error";
@@ -21,5 +22,5 @@ export const errorHandler = (err, req, res, next) => {
     message = "Invalid authentication token";
   }
 
-  return res.status(statusCode).json({ success: false, message, });
+  return new ApiResponse(statusCode, null, message).send(res);
 };

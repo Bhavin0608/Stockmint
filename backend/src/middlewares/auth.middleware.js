@@ -33,7 +33,8 @@ export const authenticateUser = async (req, res, next) => {
     req.user = user;
 
     next();
-  } catch (error) {
+  } 
+  catch (error) {
     next(error);
   }
 };
