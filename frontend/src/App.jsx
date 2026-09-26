@@ -1,8 +1,12 @@
-import Login from "./pages/auth/Login";
+import { BrowserRouter } from "react-router-dom";
+import AppRoutes from "./routes/AppRoutes";
 
-function App(){
-  // return <h3>Stockmint Frontend Under Development</h3>
-  return <Login />;
+function App() {
+    return (
+        <BrowserRouter>
+            <AppRoutes />
+        </BrowserRouter>
+    );
 }
 
 export default App;

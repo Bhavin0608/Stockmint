@@ -1,8 +1,10 @@
 import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
 const Login = () => {
     const { login } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         email: "",
@@ -36,7 +38,7 @@ const Login = () => {
 
             await login(formData);
 
-            console.log("Login successful");
+            navigate("/", { replace: true });
         } catch (error) {
             console.error(
                 "Login failed:",
@@ -53,13 +55,12 @@ const Login = () => {
     };
 
     return (
-        <div>
+        <div style={{ maxWidth: "400px", margin: "40px auto", padding: "20px", fontFamily: "sans-serif" }}>
             <h1>Login to Stockmint</h1>
 
             <form onSubmit={handleSubmit}>
-
-                <div>
-                    <label htmlFor="email">
+                <div style={{ marginBottom: "15px" }}>
+                    <label htmlFor="email" style={{ display: "block", marginBottom: "5px" }}>
                         Email
                     </label>
 
@@ -70,11 +71,12 @@ const Login = () => {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="Enter your email"
+                        style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
                     />
                 </div>
 
-                <div>
-                    <label htmlFor="password">
+                <div style={{ marginBottom: "15px" }}>
+                    <label htmlFor="password" style={{ display: "block", marginBottom: "5px" }}>
                         Password
                     </label>
 
@@ -85,11 +87,12 @@ const Login = () => {
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="Enter your password"
+                        style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
                     />
                 </div>
 
                 {error && (
-                    <p>
+                    <p style={{ color: "#e53e3e", marginBottom: "15px" }}>
                         {error}
                     </p>
                 )}
@@ -97,11 +100,24 @@ const Login = () => {
                 <button
                     type="submit"
                     disabled={isSubmitting}
+                    style={{
+                        width: "100%",
+                        padding: "10px",
+                        backgroundColor: "#3182ce",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontWeight: "bold"
+                    }}
                 >
                     {isSubmitting ? "Logging in..." : "Login"}
                 </button>
-
             </form>
+
+            <p style={{ marginTop: "20px", textAlign: "center" }}>
+                Don't have an account? <Link to="/register">Register here</Link>
+            </p>
         </div>
     );
 };
