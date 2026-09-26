@@ -47,8 +47,8 @@ export const AuthProvider = ({ children }) => {
 
             const profileResponse = await getProfile();
 
-            setUser(profileResponse.data.user);
-        } catch (error) {
+            setUser(profileResponse.data);
+        } catch {
             setUser(null);
             setAccessToken(null);
             removeAccessToken();
