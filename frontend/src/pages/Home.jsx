@@ -6,64 +6,87 @@ const Home = () => {
     const { user, isAuthenticated, logout } = useContext(AuthContext);
 
     return (
-        <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", fontFamily: "sans-serif" }}>
-            <h1>Stockmint</h1>
-            <p>E-commerce Web Application</p>
+        <div style={{ maxWidth: "700px", margin: "40px auto", padding: "0 24px", width: "100%" }}>
+            <h1 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>Stockmint Storefront</h1>
+            <p style={{ color: "var(--text-muted)", marginBottom: "24px" }}>
+                Browse products, add items to cart, and manage your orders.
+            </p>
 
-            {/* Here we display the user information if we are authenticated else we display a not login message. */}
             {isAuthenticated && user ? (
-                <div>
-                    <h2>Welcome, {user.name}!</h2>
-                    <div style={{ background: "#f4f4f4", padding: "15px", borderRadius: "6px", margin: "15px 0" }}>
-                        <p><strong>Email:</strong> {user.email}</p>
-                        <p><strong>Role:</strong> {user.role}</p>
+                <div
+                    style={{
+                        backgroundColor: "var(--card-bg)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "8px",
+                        padding: "24px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                    }}
+                >
+                    <h2 style={{ fontSize: "20px", marginBottom: "16px" }}>Account Overview</h2>
+                    <div style={{ backgroundColor: "var(--bg-secondary)", padding: "16px", borderRadius: "6px", marginBottom: "20px" }}>
+                        <p style={{ marginBottom: "8px" }}><strong>Name:</strong> {user.name}</p>
+                        <p style={{ marginBottom: "8px" }}><strong>Email:</strong> {user.email}</p>
+                        <p style={{ marginBottom: "8px" }}><strong>Role:</strong> <span style={{ textTransform: "uppercase", fontSize: "12px", fontWeight: "700", padding: "2px 8px", backgroundColor: "var(--primary)", color: "#fff", borderRadius: "4px" }}>{user.role}</span></p>
                         <p><strong>Status:</strong> {user.status}</p>
                     </div>
                     <button
                         onClick={logout}
                         style={{
-                            padding: "10px 18px",
-                            backgroundColor: "#e53e3e",
+                            padding: "8px 16px",
+                            backgroundColor: "var(--danger)",
                             color: "#fff",
                             border: "none",
-                            borderRadius: "4px",
+                            borderRadius: "6px",
                             cursor: "pointer",
                             fontSize: "14px",
-                            fontWeight: "bold"
+                            fontWeight: "600"
                         }}
                     >
                         Logout
                     </button>
                 </div>
             ) : (
-                <div>
-                    <p>You are not logged in.</p>
-                    <div style={{ display: "flex", gap: "12px", marginTop: "15px" }}>
+                <div
+                    style={{
+                        backgroundColor: "var(--card-bg)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "8px",
+                        padding: "24px",
+                        textAlign: "center"
+                    }}
+                >
+                    <p style={{ fontSize: "16px", marginBottom: "16px" }}>
+                        Welcome to Stockmint! Please sign in or create an account to start shopping.
+                    </p>
+                    <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
                         <Link
                             to="/login"
                             style={{
-                                padding: "8px 16px",
-                                backgroundColor: "#3182ce",
+                                padding: "8px 18px",
+                                backgroundColor: "var(--primary)",
                                 color: "#fff",
                                 textDecoration: "none",
-                                borderRadius: "4px",
-                                fontSize: "14px"
+                                borderRadius: "6px",
+                                fontSize: "14px",
+                                fontWeight: "500"
                             }}
                         >
-                            Go to Login
+                            Sign In
                         </Link>
                         <Link
                             to="/register"
                             style={{
-                                padding: "8px 16px",
-                                backgroundColor: "#4a5568",
-                                color: "#fff",
+                                padding: "8px 18px",
+                                backgroundColor: "var(--bg-secondary)",
+                                color: "var(--text)",
+                                border: "1px solid var(--border)",
                                 textDecoration: "none",
-                                borderRadius: "4px",
-                                fontSize: "14px"
+                                borderRadius: "6px",
+                                fontSize: "14px",
+                                fontWeight: "500"
                             }}
                         >
-                            Go to Register
+                            Create Account
                         </Link>
                     </div>
                 </div>
