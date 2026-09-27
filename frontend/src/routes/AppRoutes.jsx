@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import Home from "../pages/Home";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
+import ProductDetails from "../pages/ProductDetails";
 
 import MainLayout from "../layouts/MainLayout";
 
@@ -24,6 +25,7 @@ const AppRoutes = () => {
             <Route element={<MainLayout />}>
                 {/* this is the public URL Anyone can access it*/}
                 <Route path="/" element={<Home />} />
+                <Route path="/products/:id" element={<ProductDetails />} />
                 {/* these are guest URLs Only non-authenticated users should access them*/}
                 <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
                 <Route path="/register" element={isAuthenticated ? <Navigate to="/" replace /> : <Register />} />
