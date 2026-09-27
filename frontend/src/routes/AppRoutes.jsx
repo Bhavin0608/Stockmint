@@ -6,6 +6,7 @@ import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ProductDetails from "../pages/ProductDetails";
 import AddressList from "../pages/addresses/AddressList";
+import Cart from "../pages/cart/Cart";
 
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -31,6 +32,7 @@ const AppRoutes = () => {
 
                 {/* Authenticated Customer Routes */}
                 <Route element={<ProtectedRoute />}>
+                    <Route path="/cart" element={<Cart />} />
                     <Route path="/addresses" element={<AddressList />} />
                 </Route>
 

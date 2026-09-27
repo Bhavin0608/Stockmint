@@ -1,9 +1,11 @@
 import { useContext } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { CartContext } from "../../context/CartContext";
 
 const Navbar = () => {
     const { user, isAuthenticated, logout } = useContext(AuthContext);
+    const { itemCount } = useContext(CartContext);
 
     const navLinkStyle = ({ isActive }) => ({
         padding: "8px 12px",
@@ -63,6 +65,25 @@ const Navbar = () => {
 
                     {isAuthenticated && user ? (
                         <>
+                            <NavLink to="/cart" style={navLinkStyle}>
+                                Cart
+                                {itemCount > 0 && (
+                                    <span
+                                        style={{
+                                            backgroundColor: "var(--primary)",
+                                            color: "#fff",
+                                            borderRadius: "10px",
+                                            padding: "2px 7px",
+                                            fontSize: "11px",
+                                            fontWeight: "700",
+                                            marginLeft: "6px"
+                                        }}
+                                    >
+                                        {itemCount}
+                                    </span>
+                                )}
+                            </NavLink>
+
                             <NavLink to="/addresses" style={navLinkStyle}>
                                 Addresses
                             </NavLink>

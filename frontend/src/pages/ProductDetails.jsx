@@ -2,12 +2,14 @@ import { useState, useEffect, useContext } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getProductById, getProductVariants } from "../services/product.service";
 import { AuthContext } from "../context/AuthContext";
+import { CartContext } from "../context/CartContext";
 import VariantSelector from "../components/product/VariantSelector";
 
 const ProductDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { isAuthenticated } = useContext(AuthContext);
+    const { addToCart } = useContext(CartContext);
 
     const [product, setProduct] = useState(null);
     const [variants, setVariants] = useState([]);
@@ -15,8 +17,10 @@ const ProductDetails = () => {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
+    const [addingToCart, setAddingToCart] = useState(false);
     const [error, setError] = useState("");
     const [feedback, setFeedback] = useState("");
+    const [isAddedSuccess, setIsAddedSuccess] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -55,20 +59,31 @@ const ProductDetails = () => {
         setQuantity((prev) => Math.max(1, prev + delta));
     };
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         if (!selectedVariant) {
             setFeedback("Please select a variant first.");
+            setIsAddedSuccess(false);
             return;
         }
 
         if (!isAuthenticated) {
-            // Prompt guest to login before adding to cart
             navigate("/login");
             return;
         }
 
-        // Cart service integration will attach here
-        setFeedback(`Selected ${quantity} x ${selectedVariant.sku} for cart.`);
+        try {
+            setAddingToCart(true);
+            setFeedback("");
+            await addToCart(selectedVariant._id, quantity);
+            setIsAddedSuccess(true);
+            setFeedback(`Added ${quantity} item(s) to your cart!`);
+        } catch (err) {
+            console.error("Failed to add to cart:", err);
+            setIsAddedSuccess(false);
+            setFeedback(err.response?.data?.message || "Failed to add item to cart.");
+        } finally {
+            setAddingToCart(false);
+        }
     };
 
     if (loading) {
@@ -386,7 +401,7 @@ const ProductDetails = () => {
                             <button
                                 type="button"
                                 onClick={handleAddToCart}
-                                disabled={!selectedVariant}
+                                disabled={!selectedVariant || addingToCart}
                                 style={{
                                     flex: 1,
                                     padding: "10px 20px",
@@ -396,26 +411,44 @@ const ProductDetails = () => {
                                     borderRadius: "6px",
                                     fontSize: "15px",
                                     fontWeight: "600",
-                                    cursor: selectedVariant ? "pointer" : "not-allowed",
-                                    transition: "background-color 0.2s ease"
+                                    cursor: selectedVariant && !addingToCart ? "pointer" : "not-allowed",
+                                    transition: "background-color 0.2s ease",
+                                    opacity: addingToCart ? 0.7 : 1
                                 }}
                             >
-                                Add to Cart
+                                {addingToCart ? "Adding to Cart..." : "Add to Cart"}
                             </button>
                         </div>
 
                         {feedback && (
                             <div
                                 style={{
-                                    padding: "10px 14px",
-                                    backgroundColor: "rgba(37, 99, 235, 0.08)",
-                                    border: "1px solid var(--primary)",
+                                    padding: "12px 16px",
+                                    backgroundColor: isAddedSuccess ? "#ecfdf5" : "#fef2f2",
+                                    border: "1px solid",
+                                    borderColor: isAddedSuccess ? "#a7f3d0" : "#fecaca",
                                     borderRadius: "6px",
-                                    color: "var(--primary)",
-                                    fontSize: "13px"
+                                    color: isAddedSuccess ? "#065f46" : "var(--danger)",
+                                    fontSize: "13px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: "12px"
                                 }}
                             >
-                                {feedback}
+                                <span>{feedback}</span>
+                                {isAddedSuccess && (
+                                    <Link
+                                        to="/cart"
+                                        style={{
+                                            color: "var(--primary)",
+                                            fontWeight: "700",
+                                            textDecoration: "underline"
+                                        }}
+                                    >
+                                        View Cart &rarr;
+                                    </Link>
+                                )}
                             </div>
                         )}
                     </div>
