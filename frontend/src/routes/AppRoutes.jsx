@@ -7,6 +7,8 @@ import Register from "../pages/auth/Register";
 import ProductDetails from "../pages/ProductDetails";
 import AddressList from "../pages/addresses/AddressList";
 import Cart from "../pages/cart/Cart";
+import Checkout from "../pages/checkout/Checkout";
+import OrderSuccess from "../pages/checkout/OrderSuccess";
 
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -34,6 +36,8 @@ const AppRoutes = () => {
                 <Route element={<ProtectedRoute />}>
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/addresses" element={<AddressList />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/checkout/success" element={<OrderSuccess />} />
                 </Route>
 
                 {/* these are guest URLs Only non-authenticated users should access them*/}
