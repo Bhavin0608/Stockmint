@@ -9,6 +9,8 @@ import AddressList from "../pages/addresses/AddressList";
 import Cart from "../pages/cart/Cart";
 import Checkout from "../pages/checkout/Checkout";
 import OrderSuccess from "../pages/checkout/OrderSuccess";
+import OrderList from "../pages/orders/OrderList";
+import OrderDetail from "../pages/orders/OrderDetail";
 
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -38,6 +40,8 @@ const AppRoutes = () => {
                     <Route path="/addresses" element={<AddressList />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/checkout/success" element={<OrderSuccess />} />
+                    <Route path="/orders" element={<OrderList />} />
+                    <Route path="/orders/:id" element={<OrderDetail />} />
                 </Route>
 
                 {/* these are guest URLs Only non-authenticated users should access them*/}

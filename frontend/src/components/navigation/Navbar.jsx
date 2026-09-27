@@ -88,6 +88,10 @@ const Navbar = () => {
                                 Addresses
                             </NavLink>
 
+                            <NavLink to="/orders" style={navLinkStyle}>
+                                Orders
+                            </NavLink>
+
                             {user.role === "admin" && (
                                 <NavLink to="/admin" style={navLinkStyle}>
                                     Admin
