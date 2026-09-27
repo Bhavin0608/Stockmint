@@ -63,6 +63,10 @@ const Navbar = () => {
 
                     {isAuthenticated && user ? (
                         <>
+                            <NavLink to="/addresses" style={navLinkStyle}>
+                                Addresses
+                            </NavLink>
+
                             {user.role === "admin" && (
                                 <NavLink to="/admin" style={navLinkStyle}>
                                     Admin
