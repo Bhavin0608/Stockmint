@@ -12,9 +12,11 @@ import OrderSuccess from "../pages/checkout/OrderSuccess";
 import OrderList from "../pages/orders/OrderList";
 import OrderDetail from "../pages/orders/OrderDetail";
 import Profile from "../pages/profile/Profile";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
+import AdminRoute from "./AdminRoute";
 
 const AppRoutes = () => {
     const { isAuthenticated, loading } = useContext(AuthContext);
@@ -44,6 +46,11 @@ const AppRoutes = () => {
                     <Route path="/orders" element={<OrderList />} />
                     <Route path="/orders/:id" element={<OrderDetail />} />
                     <Route path="/profile" element={<Profile />} />
+                </Route>
+
+                {/* Authenticated Admin Routes */}
+                <Route element={<AdminRoute />}>
+                    <Route path="/admin" element={<AdminDashboard />} />
                 </Route>
 
                 {/* these are guest URLs Only non-authenticated users should access them*/}
