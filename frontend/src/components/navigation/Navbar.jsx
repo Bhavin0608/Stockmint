@@ -92,6 +92,10 @@ const Navbar = () => {
                                 Orders
                             </NavLink>
 
+                            <NavLink to="/profile" style={navLinkStyle}>
+                                Profile
+                            </NavLink>
+
                             {user.role === "admin" && (
                                 <NavLink to="/admin" style={navLinkStyle}>
                                     Admin
