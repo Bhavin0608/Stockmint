@@ -279,7 +279,7 @@ const Profile = () => {
                         borderRadius: "8px"
                     }}
                 >
-                    <div>
+                    {/* <div>
                         <span style={{ fontSize: "12px", color: "var(--text-muted)", display: "block" }}>
                             Account ID
                         </span>
@@ -293,7 +293,7 @@ const Profile = () => {
                         >
                             {profile?.id || "N/A"}
                         </span>
-                    </div>
+                    </div> */}
                     <div>
                         <span style={{ fontSize: "12px", color: "var(--text-muted)", display: "block" }}>
                             Member Since
@@ -388,7 +388,7 @@ const Profile = () => {
                         </span>
                     </div>
 
-                    <div style={{ marginBottom: "24px" }}>
+                    {/* <div style={{ marginBottom: "24px" }}>
                         <label
                             htmlFor="profile-phone"
                             style={{
@@ -418,7 +418,7 @@ const Profile = () => {
                                 backgroundColor: "var(--bg)"
                             }}
                         />
-                    </div>
+                    </div> */}
 
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
                         <button

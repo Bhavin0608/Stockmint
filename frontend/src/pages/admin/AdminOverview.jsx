@@ -215,7 +215,7 @@ const AdminOverview = ({ onSwitchTab }) => {
                 </div>
 
                 {/* Quick Shortcuts */}
-                <div
+                {/* <div
                     style={{
                         backgroundColor: "var(--card-bg)",
                         border: "1px solid var(--border)",
@@ -291,7 +291,7 @@ const AdminOverview = ({ onSwitchTab }) => {
                             <span style={{ color: "var(--primary)" }}>→</span>
                         </button>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     );
