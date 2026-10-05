@@ -26,16 +26,40 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// cors is browser access policy.
-// Enable CORS for requests from the frontend
-// It sync the frontend and backend ports to avoid CORS issues. The frontend is running on port 5173 and the backend on port 5000. The credentials: true option allows cookies to be sent with requests, which is necessary for authentication.
+// Enable trust proxy for Render / Cloudflare reverse proxy so secure cookies work properly
+app.set("trust proxy", 1);
+
+// Allowed origins for CORS (Vercel deployment + local development)
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    "http://localhost:5173",
+    "http://localhost:3000",
+].filter(Boolean);
+
 app.use(cors({
-    origin: "http://localhost:5173", 
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        if (
+            allowedOrigins.includes(origin) ||
+            origin.endsWith(".vercel.app") ||
+            (process.env.NODE_ENV !== "production" && origin.includes("localhost"))
+        ) {
+            return callback(null, true);
+        }
+        return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
 }));
+
 // Middleware to parse incoming JSON payloads
 app.use(express.json());
 app.use(cookieParser()); // it is use to convert browser cookies into a readable format for the server. it is used to read the refresh token from the cookie in the login route.
+
+// Health check endpoint for Render monitoring
+app.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "ok", message: "Stockmint API is running", timestamp: new Date().toISOString() });
+});
 
 //All auth routes will be prefixed with /api/auth
 //This is called mounting the router. All routes defined in authRouter will be accessible under /api/auth.

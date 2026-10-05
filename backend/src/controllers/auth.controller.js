@@ -12,17 +12,22 @@ export const register = async (req, res, next) => {
   }
 };
 
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+  };
+};
+
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const result = await loginUser({email, password,});
 
-    res.cookie("refreshToken", result.refreshToken, { // this are the security settings. object
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-    });
+    res.cookie("refreshToken", result.refreshToken, getCookieOptions());
 
     const data = {
       accessToken: result.accessToken, 
@@ -41,12 +46,7 @@ export const refresh = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
     const result = await refreshAccessToken(refreshToken);
 
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", result.refreshToken, getCookieOptions());
     return new ApiResponse(200, { accessToken: result.accessToken }, "Access token refreshed successfully").send(res);
   } 
   catch (error) {
@@ -59,10 +59,11 @@ export const logout = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
     await logoutUser(refreshToken);
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
     return new ApiResponse(200, null, "Logout successful").send(res);
